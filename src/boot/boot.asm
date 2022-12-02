@@ -14,13 +14,13 @@ mov sp, 0x7c00
 mov si, booting
 call print
 
-xchg bx, bx; 魔术端点
+;xchg bx, bx; 魔术端点
 mov edi, 0x1000; 读取目标内存
 mov ecx, 2; 起始扇区
 mov bl, 4;  扇区数量
 call read_disk
 
-xchg bx, bx; 魔术端点
+;xchg bx, bx; 魔术端点
 
 cmp word [0x1000] , 0x55aa
 jnz error
