@@ -18,19 +18,21 @@ INCLUDE:=-I$(SRC)/include
 $(BUILD)/boot/%.bin: $(SRC)/boot/%.asm
 	$(shell mkdir -p $(dir $@))
 	echo "$(dir $@)"
-	nasm -f bin $< -o $@
+	nasm -f bin $< -o $@ 
 
 $(BUILD)/kernel/%.o: $(SRC)/kernel/%.asm
 	$(shell mkdir -p $(dir $@))
-	nasm -f elf32 $< -o $@
+	nasm -gdwarf -f elf32 $< -o $@
 
 $(BUILD)/kernel/%.o: $(SRC)/kernel/%.c
 	$(shell mkdir -p $(dir $@))
 	gcc $(CFLAGS) $(DEBUG) $(INCLUDE) -c $< -o $@
 
 
-$(BUILD)/kernel.bin: $(BUILD)/kernel/start.o \
-	$(BUILD)/kernel/main.o
+$(BUILD)/kernel.bin:  \
+	$(BUILD)/kernel/start.o \
+	$(BUILD)/kernel/main.o \
+	$(BUILD)/kernel/io.o \
 
 	$(shell mkdir -p $(dir $@))
 	ld -m elf_i386 -static $^ -o $@ -Ttext $(ENTRYPOINT)
@@ -41,7 +43,8 @@ $(BUILD)/system.bin: $(BUILD)/kernel.bin
 $(BUILD)/system.map: $(BUILD)/kernel.bin
 	nm $< | sort > $@
 
-$(BUILD)/master.img: $(BUILD)/boot/boot.bin \
+$(BUILD)/master.img: \
+    $(BUILD)/boot/boot.bin \
  	$(BUILD)/boot/loader.bin \
 	$(BUILD)/system.bin \
 	$(BUILD)/system.map \
@@ -61,4 +64,23 @@ clean:
 
 .PHONY:bochs
 bochs: $(BUILD)/master.img
-	bochs -q
+	bochs -q -f ../bochs/bochsrc
+
+.PHONY:bochsg
+bochsg: $(BUILD)/master.img
+	bochs-gdb -q -f ../bochs/bochsrc.gdb
+
+.PHONY:qemu
+qemu:$(BUILD)/master.img
+	qemu-system-i386 \
+	-m 32M \
+	-boot c \
+	-hda $< 
+
+.PHONY:qemug
+qemug:$(BUILD)/master.img
+	qemu-system-i386 \
+	-m 32M \
+	-boot c \
+	-hda $< \
+	-s -S 
