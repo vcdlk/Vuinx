@@ -1,5 +1,6 @@
 #include <vinx/console.h>
 #include <vinx/io.h>
+#include <vinx/string.h>
 
 #define CRT_ADDR_REG 0x3D4 // CRT(6845)索引寄存器
 #define CRT_DATA_REG 0x3D5 // CRT(6845)数据寄存器
@@ -17,7 +18,7 @@
 #define ROW_SIZE (WIDTH * 2)          // 每行字节数
 #define SCR_SIZE (ROW_SIZE * HEIGHT)  // 屏幕字节数
 
-#define ASCII_NUL 0x00
+#define ASCII_NULL 0x00
 #define ASCII_ENQ 0x05
 #define ASCII_BEL 0x07 // \a
 #define ASCII_BS 0x08  // \b
@@ -84,6 +85,64 @@ static void SetCursor()
     Outb(CRT_ADDR_REG, CRT_CURSOR_L);
     Outb(CRT_DATA_REG, ((pos - MEM_BASE) >> 1) & 0xff);
 }
+// 退一个字符
+static void CommandBs()
+{
+    if (x)
+    {
+        x--;
+        pos -= 2;
+        *(uint16_t *)pos = erase;
+    }
+}
+
+// 删除当前字符
+static void CommandDel()
+{
+    *(uint16_t *)pos = erase;
+}
+
+// 回到当前位置
+static void CommandCr()
+{
+    pos -= (x << 1);
+    x = 0;
+}
+
+// 屏幕向上滚一行
+static void ScrollUp()
+{
+    if (screen + SCR_SIZE + ROW_SIZE < MEM_END)
+    {
+        uint32_t *ptr = (uint32_t *)(screen + SCR_SIZE);
+        for (size_t i = 0; i < WIDTH; i++)
+        {
+            *ptr++ = erase;
+        }
+        screen += ROW_SIZE;
+        pos += ROW_SIZE;
+    }
+    else
+    {
+        memcpy(MEM_BASE, screen, SCR_SIZE);
+        pos -= (screen - MEM_BASE);
+        screen = MEM_BASE;
+    }
+    SetCursor();
+    return 0;
+}
+
+// \n
+static void CommandLf()
+{
+    if (y + 1 < HEIGHT)
+    {
+        y++;
+        pos += ROW_SIZE;
+        return;
+    }
+    ScrollUp();
+}
 
 // 屏幕初始化
 void ConsoleInit(void)
@@ -114,6 +173,60 @@ void ConsoleClear(void)
 // 向屏幕写字符
 void ConsoleWrite(char *buf, uint32_t count)
 {
+    char ch;
+    char *ptr = (char *)pos;
+    while (count--)
+    {
+        ch = *buf;
+        buf++;
+        switch (ch)
+        {
+        case ASCII_NULL:
+            break;
+        case ASCII_BEL:
+            // todo start_beep();
+            break;
+        case ASCII_BS:
+            CommandBs();
+            break;
+        case ASCII_HT:
+            break;
+        case ASCII_LF:
+            CommandLf();
+            CommandCr();
+            break;
+        case ASCII_VT:
+            break;
+        case ASCII_FF:
+            CommandLf();
+            break;
+        case ASCII_CR:
+            CommandCr();
+            break;
+        case ASCII_DEL:
+            CommandDel();
+            break;
+
+        default:
+        {
+            if (x >= WIDTH)
+            {
+                x -= WIDTH;
+                pos -= ROW_SIZE;
+                CommandLf();
+            }
+            *ptr = ch;
+            ptr++;
+            *ptr = attr;
+            ptr++;
+            pos += 2;
+            x++;
+
+            break;
+        }
+        }
+        SetCursor();
+    }
 
     return;
 }
