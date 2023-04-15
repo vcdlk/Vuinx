@@ -2,8 +2,8 @@
 #define _VINX_CONSOLE_H
 #include <vinx/types.h>
 
-void ConsoleInit(void);
-void ConsoleClear(void);
-void ConsoleWrite(char *buf, uint32_t count);
+void console_init(void);
+void console_clear(void);
+void console_write(char *buf, uint32_t count);
 
 #endif

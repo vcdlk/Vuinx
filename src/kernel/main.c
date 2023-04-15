@@ -4,6 +4,7 @@
 #include <vinx/string.h>
 #include <vinx/console.h>
 #include <vinx/stdarg.h>
+#include <vinx/stdio.h>
 
 char message[] = "hellp world\n";
 char buf[1024];
@@ -23,14 +24,17 @@ void test_args(int cnt, ...)
 
 void kernel_init()
 {
-  // ConsoleInit();
-  // uint32_t count = 20;
-  // while (count--)
-  // {
-  //   ConsoleWrite(message, sizeof(message) - 1);
-  // }
+  console_init();
+  int cnt = 23;
+  while (cnt--)
+  {
+    printk("hello test %#010x\n", cnt);
+  }
 
-  // ConsoleWrite(message, sizeof(message) - 1);
-  test_args(5, 1, 0xaa, 6, 0x55, 10);
+  printk("hello test %#010x\n", 1);
+  printk("hello test %#010x\n", 2);
+  printk("hello test %#010x\n", 3);
+
+  console_write(message, sizeof(message) - 1);
   return;
 }

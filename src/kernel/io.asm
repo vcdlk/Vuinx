@@ -2,12 +2,12 @@
 
 section .text;  // 代码段
 
-global Inb; // inb 函数导出
-global Inw; // inw 函数导出
-global Outb;    输出1个字节
-global Outw;    输出2个字节
+global inb; // inb 函数导出
+global inw; // inw 函数导出
+global outb;    输出1个字节
+global outw;    输出2个字节
 
-Inb :
+inb :
     push ebp;
     mov ebp, esp;  保存栈帧
 
@@ -23,7 +23,7 @@ Inb :
     ret;
 
 
-Inw :
+inw :
     push ebp;
     mov ebp, esp;  保存栈帧
 
@@ -38,7 +38,7 @@ Inw :
     leave; 
     ret;
 
-Outb:
+outb:
     push ebp;
     mov ebp, esp;  保存栈帧
 
@@ -55,7 +55,7 @@ Outb:
 
 
 
-Outw:
+outw:
     push ebp;
     mov ebp, esp;  保存栈帧
 

@@ -2,6 +2,8 @@
 #include <vinx/console.h>
 #include <vinx/stdio.h>
 
+extern void console_write();
+
 static char buf[1024];
 
 int printk(const char *fmt, ...)
@@ -15,6 +17,6 @@ int printk(const char *fmt, ...)
 
     va_end(args);
 
-    ConsoleWrite(buf, i);
+    console_write(buf, i);
     return i;
 }

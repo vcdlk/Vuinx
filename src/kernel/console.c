@@ -32,17 +32,17 @@
 static uint32_t screen; // 记录当前显示器开始的内存位置
 static uint32_t pos;    // 记录当前光标的内存位置
 
-static x, y;                    // 光标位置
+static uint32_t x, y;           // 光标位置
 static uint8_t attr = 7;        // 字符样式
 static uint16_t erase = 0x0720; // 空格
 
 // 获取当前显示器的开始位置
-static void GetScrean()
+static void get_screen()
 {
-    Outb(CRT_ADDR_REG, CRT_START_ADDR_H); // 读取位置高8位
-    screen = Inb(CRT_DATA_REG) << 8;
-    Outb(CRT_ADDR_REG, CRT_START_ADDR_L); // 读取位置低8位
-    screen |= Inb(CRT_DATA_REG);
+    outb(CRT_ADDR_REG, CRT_START_ADDR_H); // 读取位置高8位
+    screen = inb(CRT_DATA_REG) << 8;
+    outb(CRT_ADDR_REG, CRT_START_ADDR_L); // 读取位置低8位
+    screen |= inb(CRT_DATA_REG);
 
     screen <<= 1;       // screen *= 2
     screen += MEM_BASE; // 地址位置
@@ -50,24 +50,24 @@ static void GetScrean()
 }
 
 // 设置屏幕寄存器位置
-static void SetScreen()
+static void set_screen()
 {
-    Outb(CRT_ADDR_REG, CRT_START_ADDR_H);
-    Outb(CRT_DATA_REG, ((screen - MEM_BASE) >> 9) & 0xff);
-    Outb(CRT_ADDR_REG, CRT_START_ADDR_L);
-    Outb(CRT_DATA_REG, ((screen - MEM_BASE) >> 1) & 0xff);
+    outb(CRT_ADDR_REG, CRT_START_ADDR_H);
+    outb(CRT_DATA_REG, ((screen - MEM_BASE) >> 9) & 0xff);
+    outb(CRT_ADDR_REG, CRT_START_ADDR_L);
+    outb(CRT_DATA_REG, ((screen - MEM_BASE) >> 1) & 0xff);
     return;
 }
 
 // 获取光标位置
-static void GetCursor()
+static void get_cursor()
 {
-    Outb(CRT_ADDR_REG, CRT_CURSOR_H);
-    pos = Inb(CRT_DATA_REG) << 8;
-    Outb(CRT_ADDR_REG, CRT_CURSOR_L);
-    pos |= Inb(CRT_DATA_REG);
+    outb(CRT_ADDR_REG, CRT_CURSOR_H);
+    pos = inb(CRT_DATA_REG) << 8;
+    outb(CRT_ADDR_REG, CRT_CURSOR_L);
+    pos |= inb(CRT_DATA_REG);
 
-    GetScrean();
+    get_screen();
     pos <<= 1;
     pos += MEM_BASE;
 
@@ -78,15 +78,15 @@ static void GetCursor()
 }
 
 // 设置光标位置
-static void SetCursor()
+static void set_cursor()
 {
-    Outb(CRT_ADDR_REG, CRT_CURSOR_H);
-    Outb(CRT_DATA_REG, ((pos - MEM_BASE) >> 9) & 0xff);
-    Outb(CRT_ADDR_REG, CRT_CURSOR_L);
-    Outb(CRT_DATA_REG, ((pos - MEM_BASE) >> 1) & 0xff);
+    outb(CRT_ADDR_REG, CRT_CURSOR_H);
+    outb(CRT_DATA_REG, ((pos - MEM_BASE) >> 9) & 0xff);
+    outb(CRT_ADDR_REG, CRT_CURSOR_L);
+    outb(CRT_DATA_REG, ((pos - MEM_BASE) >> 1) & 0xff);
 }
 // 退一个字符
-static void CommandBs()
+static void command_bs()
 {
     if (x)
     {
@@ -97,22 +97,28 @@ static void CommandBs()
 }
 
 // 删除当前字符
-static void CommandDel()
+static void command_del()
 {
     *(uint16_t *)pos = erase;
 }
 
 // 回到当前位置
-static void CommandCr()
+static void command_cr()
 {
     pos -= (x << 1);
     x = 0;
 }
 
 // 屏幕向上滚一行
-static void ScrollUp()
+static void scroll_up()
 {
-    if (screen + SCR_SIZE + ROW_SIZE < MEM_END)
+    if (screen + SCR_SIZE + ROW_SIZE >= MEM_END)
+    {
+        memcpy((void *)MEM_BASE, (void *)screen, SCR_SIZE);
+        pos -= (screen - MEM_BASE);
+        screen = MEM_BASE;
+    }
+    else
     {
         uint32_t *ptr = (uint32_t *)(screen + SCR_SIZE);
         for (size_t i = 0; i < WIDTH; i++)
@@ -122,18 +128,12 @@ static void ScrollUp()
         screen += ROW_SIZE;
         pos += ROW_SIZE;
     }
-    else
-    {
-        memcpy(MEM_BASE, screen, SCR_SIZE);
-        pos -= (screen - MEM_BASE);
-        screen = MEM_BASE;
-    }
-    SetCursor();
-    return 0;
+    set_screen();
+    return;
 }
 
 // \n
-static void CommandLf()
+static void command_lf()
 {
     if (y + 1 < HEIGHT)
     {
@@ -141,28 +141,28 @@ static void CommandLf()
         pos += ROW_SIZE;
         return;
     }
-    ScrollUp();
+    scroll_up();
 }
 
 // 屏幕初始化
-void ConsoleInit(void)
+void console_init(void)
 {
-    ConsoleClear();
+    console_clear();
     return;
 }
 
 // 屏幕清空
-void ConsoleClear(void)
+void console_clear(void)
 {
     screen = MEM_BASE;
     pos = MEM_BASE;
     x = 0;
     y = 0;
-    SetCursor();
-    SetScreen();
+    set_cursor();
+    set_screen();
 
     uint16_t *ptr = (uint16_t *)MEM_BASE;
-    while (ptr < MEM_END)
+    while (ptr < (uint16_t *)MEM_END)
     {
         *ptr++ = erase;
     }
@@ -171,7 +171,7 @@ void ConsoleClear(void)
 }
 
 // 向屏幕写字符
-void ConsoleWrite(char *buf, uint32_t count)
+void console_write(char *buf, uint32_t count)
 {
     char ch;
     char *ptr = (char *)pos;
@@ -187,24 +187,24 @@ void ConsoleWrite(char *buf, uint32_t count)
             // todo start_beep();
             break;
         case ASCII_BS:
-            CommandBs();
+            command_bs();
             break;
         case ASCII_HT:
             break;
         case ASCII_LF:
-            CommandLf();
-            CommandCr();
+            command_lf();
+            command_cr();
             break;
         case ASCII_VT:
             break;
         case ASCII_FF:
-            CommandLf();
+            command_lf();
             break;
         case ASCII_CR:
-            CommandCr();
+            command_cr();
             break;
         case ASCII_DEL:
-            CommandDel();
+            command_del();
             break;
 
         default:
@@ -213,11 +213,11 @@ void ConsoleWrite(char *buf, uint32_t count)
             {
                 x -= WIDTH;
                 pos -= ROW_SIZE;
-                CommandLf();
+                command_lf();
             }
-            *ptr = ch;
+            *(char *)ptr = ch;
             ptr++;
-            *ptr = attr;
+            *(char *)ptr = attr;
             ptr++;
             pos += 2;
             x++;
@@ -225,7 +225,7 @@ void ConsoleWrite(char *buf, uint32_t count)
             break;
         }
         }
-        SetCursor();
+        set_cursor();
     }
 
     return;
