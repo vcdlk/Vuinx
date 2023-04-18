@@ -7,7 +7,7 @@ global inw; // inw 函数导出
 global outb;    输出1个字节
 global outw;    输出2个字节
 
-inb :
+inb:
     push ebp;
     mov ebp, esp;  保存栈帧
 
@@ -23,7 +23,7 @@ inb :
     ret;
 
 
-inw :
+inw:
     push ebp;
     mov ebp, esp;  保存栈帧
 

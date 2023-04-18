@@ -174,7 +174,6 @@ void console_clear(void)
 void console_write(char *buf, uint32_t count)
 {
     char ch;
-    char *ptr = (char *)pos;
     while (count--)
     {
         ch = *buf;
@@ -215,13 +214,11 @@ void console_write(char *buf, uint32_t count)
                 pos -= ROW_SIZE;
                 command_lf();
             }
-            *(char *)ptr = ch;
-            ptr++;
-            *(char *)ptr = attr;
-            ptr++;
-            pos += 2;
+            *(char *)pos = ch;
+            pos++;
+            *(char *)pos = attr;
+            pos++;
             x++;
-
             break;
         }
         }

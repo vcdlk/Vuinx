@@ -5,6 +5,8 @@
 #include <vinx/console.h>
 #include <vinx/stdarg.h>
 #include <vinx/stdio.h>
+#include <vinx/assert.h>
+#include <vinx/printk.h>
 
 char message[] = "hellp world\n";
 char buf[1024];
@@ -36,5 +38,7 @@ void kernel_init()
   printk("hello test %#010x\n", 3);
 
   console_write(message, sizeof(message) - 1);
+  assert(1 < 2);
+  assert(1 > 2);
   return;
 }
