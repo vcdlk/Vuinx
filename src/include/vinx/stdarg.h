@@ -1,5 +1,6 @@
 #ifndef _VINX_STDARG_H
 #define _VINX_STDARG_H
+#include <vinx/types.h>
 
 typedef char *va_list;
 
