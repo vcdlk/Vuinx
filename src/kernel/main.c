@@ -8,6 +8,7 @@
 #include <vinx/assert.h>
 #include <vinx/printk.h>
 #include <vinx/debug.h>
+#include <vinx/global.h>
 
 char message[] = "hellp world\n";
 char buf[1024];
@@ -28,6 +29,8 @@ void test_args(int cnt, ...)
 void kernel_init()
 {
   console_init();
+  gdt_init();
+
   int cnt = 23;
   while (cnt--)
   {
