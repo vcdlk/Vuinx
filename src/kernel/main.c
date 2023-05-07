@@ -30,21 +30,6 @@ void kernel_init()
 {
   console_init();
   gdt_init();
-
-  int cnt = 23;
-  while (cnt--)
-  {
-    printk("hello test %#010x\n", cnt);
-  }
-
-  printk("hello test %#010x\n", 1);
-  printk("hello test %#010x\n", 2);
-  printk("hello test %#010x\n", 3);
-
-  console_write(message, sizeof(message) - 1);
-  DEBUGK("Test %s", message);
-
-  assert(1 < 2);
-  assert(1 > 2);
+  task_init();
   return;
 }
