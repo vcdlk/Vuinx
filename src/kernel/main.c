@@ -9,6 +9,7 @@
 #include <vinx/printk.h>
 #include <vinx/debug.h>
 #include <vinx/global.h>
+#include <vinx/interrupt.h>
 
 char message[] = "hellp world\n";
 char buf[1024];
@@ -30,6 +31,8 @@ void kernel_init()
 {
   console_init();
   gdt_init();
-  task_init();
+  // task_init();
+  interrupt_init();
+  // asm volatile(" \n int 0x80 \n");
   return;
 }
