@@ -16,6 +16,7 @@ typedef struct gate_t
     uint8_t present : 1; // 是否有效
     uint16_t offset1;    // 段内偏移 16 ~ 31 位
 } _packed gate_t;
+typedef void *handler_t; // 中断处理函数
 
 void interrupt_init();
 
