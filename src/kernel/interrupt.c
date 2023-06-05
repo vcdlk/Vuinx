@@ -2,6 +2,7 @@
 #include <vinx/global.h>
 #include <vinx/debug.h>
 #include <vinx/stdlib.h>
+#include <vinx/assert.h>
 
 #define ENTRY_SIZE 0x30
 #define LOGK(fmt, args...) DEBUGK(fmt, ##args)
@@ -70,7 +71,7 @@ void pic_init()
     outb(PIC_S_DATA, 2);          // ICW3: 设置从片连接到主片的 IR2 引脚
     outb(PIC_S_DATA, 0b00000001); // ICW4: 8086模式, 正常EOI
 
-    outb(PIC_M_DATA, 0b11111110); // 关闭所有中断
+    outb(PIC_M_DATA, 0b11111111); // 关闭所有中断
     outb(PIC_S_DATA, 0b11111111); // 关闭所有中断
 }
 
@@ -121,7 +122,7 @@ void idt_init()
         handler_table[i] = exception_handler;
     }
 
-    for (size_t i = 20; i < ENTRY_SIZE; i++)
+    for (size_t i = 0x20; i < ENTRY_SIZE; i++)
     {
         handler_table[i] = default_handler;
     }
@@ -130,6 +131,35 @@ void idt_init()
     idt_ptr.limit = sizeof(idt) - 1;
 
     asm volatile("lidt idt_ptr\n");
+}
+
+void set_interrupt_handler(uint32_t irq, handler_t handler)
+{
+    assert(irq >= 0 && irq < 16);
+    handler_table[IRQ_MASTER_NR + irq] = handler;
+}
+
+void set_interrupt_mask(uint32_t irq, bool enable)
+{
+    assert(irq >= 0 && irq < 16);
+    uint16_t port = 0;
+    if (irq < 8) // 主片
+    {
+        port = PIC_M_DATA;
+    }
+    else // 从片
+    {
+        port = PIC_S_DATA;
+        irq -= 8;
+    }
+    if (enable)
+    {
+        outb(port, inb(port) & ~(1 << irq));
+    }
+    else
+    {
+        outb(port, inb(port) | (1 << irq));
+    }
 }
 
 void interrupt_init()

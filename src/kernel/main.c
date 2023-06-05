@@ -10,22 +10,11 @@
 #include <vinx/debug.h>
 #include <vinx/global.h>
 #include <vinx/interrupt.h>
+#include <vinx/clock.h>
+#include <vinx/stdlib.h>
 
 char message[] = "hellp world\n";
 char buf[1024];
-
-void test_args(int cnt, ...)
-{
-  va_list args;
-  va_start(args, cnt);
-
-  int arg;
-  while (cnt--)
-  {
-    arg = va_arg(args, int);
-  }
-  va_end(args);
-}
 
 void kernel_init()
 {
@@ -33,17 +22,10 @@ void kernel_init()
   gdt_init();
   // task_init();
   interrupt_init();
+  clock_init();
 
-  asm volatile(
-      "sti\n"
-      "movl %eax, %eax\n");
-
-  uint32_t counter = 0;
-  while (true)
-  {
-    DEBUGK("looping in kernel init %d...\n", counter++);
-    delay(100000000);
-  }
+  asm volatile("sti");
+  hang();
 
   return;
 }

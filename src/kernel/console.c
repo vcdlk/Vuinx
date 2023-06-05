@@ -118,16 +118,15 @@ static void scroll_up()
         pos -= (screen - MEM_BASE);
         screen = MEM_BASE;
     }
-    else
+
+    uint32_t *ptr = (uint32_t *)(screen + SCR_SIZE);
+    for (size_t i = 0; i < WIDTH; i++)
     {
-        uint32_t *ptr = (uint32_t *)(screen + SCR_SIZE);
-        for (size_t i = 0; i < WIDTH; i++)
-        {
-            *ptr++ = erase;
-        }
-        screen += ROW_SIZE;
-        pos += ROW_SIZE;
+        *ptr++ = erase;
     }
+    screen += ROW_SIZE;
+    pos += ROW_SIZE;
+
     set_screen();
     return;
 }
@@ -170,6 +169,8 @@ void console_clear(void)
     return;
 }
 
+// extern void start_beep();
+
 // 向屏幕写字符
 void console_write(char *buf, uint32_t count)
 {
@@ -183,7 +184,7 @@ void console_write(char *buf, uint32_t count)
         case ASCII_NULL:
             break;
         case ASCII_BEL:
-            // todo start_beep();
+            // start_beep();
             break;
         case ASCII_BS:
             command_bs();
