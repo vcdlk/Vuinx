@@ -45,6 +45,7 @@ $(BUILD)/kernel.bin:  \
 	$(BUILD)/kernel/schedule.o\
 	$(BUILD)/kernel/interrupt.o\
 	$(BUILD)/kernel/handler.o\
+	$(BUILD)/lib/stdlib.o\
 
 	
 	
